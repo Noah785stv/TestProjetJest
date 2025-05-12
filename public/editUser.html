@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifier un Utilisateur</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .cancel-btn {
+            background-color: #f44336;
+        }
+        .cancel-btn:hover {
+            background-color: #d32f2f;
+        }
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>Modifier un Utilisateur</h1>
+    
+    <div id="message" class="message" style="display: none;"></div>
+    
+    <form id="editUserForm">
+        <input type="hidden" id="userId">
+        
+        <div class="form-group">
+            <label for="name">Nom</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        
+        <div class="buttons">
+            <button type="submit">Enregistrer</button>
+            <button type="button" class="cancel-btn" onclick="window.location.href='/'">Annuler</button>
+        </div>
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Récupérer l'ID de l'utilisateur depuis l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('id');
+            
+            if (!userId) {
+                showMessage('ID utilisateur manquant dans l\'URL', 'error');
+                return;
+            }
+            
+            // Stocker l'ID dans le champ caché
+            document.getElementById('userId').value = userId;
+            
+            // Charger les données de l'utilisateur
+            loadUserData(userId);
+            
+            // Gestionnaire d'événements pour le formulaire
+            document.getElementById('editUserForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const userId = document.getElementById('userId').value;
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                
+                // Envoyer les données à l'API
+                fetch(`/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, email }),
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erreur lors de la mise à jour de l\'utilisateur');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Afficher un message de succès
+                    showMessage('Utilisateur mis à jour avec succès!', 'success');
+                    
+                    // Rediriger vers la page principale après quelques secondes
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                })
+                .catch(error => {
+                    showMessage(error.message, 'error');
+                });
+            });
+        });
+        
+        // Fonction pour charger les données de l'utilisateur
+        function loadUserData(userId) {
+            fetch(`/users/${userId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Utilisateur non trouvé');
+                    }
+                    return response.json();
+                })
+                .then(user => {
+                    // Remplir le formulaire avec les données de l'utilisateur
+                    document.getElementById('name').value = user.name;
+                    document.getElementById('email').value = user.email;
+                })
+                .catch(error => {
+                    showMessage(error.message, 'error');
+                });
+        }
+        
+        // Fonction pour afficher un message
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html> 
